@@ -7,7 +7,7 @@ var app = require('express')(), server=app.listen(listenPort), io=require('socke
 var fs = require('fs');
 var path = require('path');
 var moment = require('moment');
-var account=require('./vendermodule.js');
+var account=require('./vendermodule');
 
 // "chat" or "room" means a chat room. "conversation" means a chat session.
 var sessionMap={};  // Key is uid, and value is session object.
