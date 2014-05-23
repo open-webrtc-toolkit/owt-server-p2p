@@ -189,7 +189,6 @@ io.of('/webrtc').authorization(function (handshakeData, callback) {
     })(i));
   }
 
-
   var stopEvents=['video-stopped','video-denied'];
   for (var i=0;i<stopEvents.length;i++){
     socket.on(stopEvents[i],(function(i){
@@ -236,6 +235,16 @@ io.of('/webrtc').authorization(function (handshakeData, callback) {
     else
       emitVideoError(socket, 2201);
   });
+
+  socket.on('video-type',function(data){
+    var fromUid=socket.handshake.user.id;
+    var targetUid=data.to;
+    if(sessionMap[targetUid])
+      sessionMap[targetUid].emit('video-type',{from:fromUid, data:data.data});
+    else
+      emitVideoError(socket, 2201);
+  });
+
 
   socket.on('chatroom-join',function(data){
     if(data.chatId){  // Join a chat
