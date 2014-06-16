@@ -149,33 +149,35 @@ io.of('/webrtc').authorization(function (handshakeData, callback) {
   console.log('A new client has connected. Online user number: '+Object.keys(sessionMap).length);
 
   socket.on('disconnect',function(){
-    var uid=socket.handshake.user.id;
-    console.log('Peers: '+JSON.stringify(socket.handshake.peers));
-    // Leave conversation
-    for(var peerId in socket.handshake.peers){
-      var peer=socket.handshake.peers[peerId];
-      console.log('Peer: '+JSON.stringify(peer));
-      // Stop conversation
-      if(peer.cid)
-        stopConversation(peer.cid);
-      var remoteSession=sessionMap[peerId];  // Peer's session.
-      if(remoteSession){
-        remoteSession.emit('video-stopped',{from: uid});
-        // Delete peer information for remote user.
-        if(remoteSession.handshake.peers[uid])
-          delete remoteSession.handshake.peers.uid;
+    if(socket.handshake){
+      var uid=socket.handshake.user.id;
+      console.log('Peers: '+JSON.stringify(socket.handshake.peers));
+      // Leave conversation
+      for(var peerId in socket.handshake.peers){
+        var peer=socket.handshake.peers[peerId];
+        console.log('Peer: '+JSON.stringify(peer));
+        // Stop conversation
+        if(peer.cid)
+          stopConversation(peer.cid);
+        var remoteSession=sessionMap[peerId];  // Peer's session.
+        if(remoteSession){
+          remoteSession.emit('video-stopped',{from: uid});
+          // Delete peer information for remote user.
+          if(remoteSession.handshake.peers[uid])
+            delete remoteSession.handshake.peers.uid;
+        }
       }
+      // If the user is in a chat, leave chat
+      if(socket.handshake.chats){
+        for(var chatId in socket.handshake.chats)
+        leaveChat(socket.handshake.chats[chatId].id,socket.handshake.user.id);
+      }
+      // Delete session
+      if(socket===sessionMap[socket.handshake.user.id]){
+        delete sessionMap[socket.handshake.user.id];
+      }
+      console.log(uid+' has disconnected. Online user number: '+Object.keys(sessionMap).length);
     }
-    // If the user is in a chat, leave chat
-    if(socket.handshake.chats){
-      for(var chatId in socket.handshake.chats)
-      leaveChat(socket.handshake.chats[chatId].id,socket.handshake.user.id);
-    }
-    // Delete session
-    if(socket===sessionMap[socket.handshake.user.id]){
-      delete sessionMap[socket.handshake.user.id];
-    }
-    console.log(uid+' has disconnected. Online user number: '+Object.keys(sessionMap).length);
   });
 
   // Forward events
