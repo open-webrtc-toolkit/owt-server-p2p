@@ -268,4 +268,10 @@ io.of('/webrtc').authorization(function (handshakeData, callback) {
   });
 });
 
+// Signaling server only allowed to be connected with Socket.io.
+// If a client try to connect it with any other methods, server returns 405.
+app.get('*', function(req, res, next) {
+  res.send(405, 'WebRTC signaling server. Please connect it with Socket.io.');
+});
+
 console.info('Listening port: ' + listenPort);
