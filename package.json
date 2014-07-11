@@ -1,0 +1,15 @@
+{
+  "name": "P2PServer",
+  "version": "1.0.0",
+  "description": "Intel Conference P2P Server",
+  "homepage": "http://webrtc.intel.com",
+  "author": {
+    "name": "Intel SSG",
+    "email": "webrtc@intel.com"
+  },
+  "dependencies": {
+    "express":"~3.4",
+    "socket.io":"~0.9",
+    "moment":"2.5.0"
+  }
+}
