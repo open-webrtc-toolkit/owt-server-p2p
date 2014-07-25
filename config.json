@@ -1,0 +1,10 @@
+{
+  "port": {
+    "plain": 8095,
+    "secured": 8096
+  },
+  "log": {
+    "enabled": true,
+    "level": 1
+  }
+}
