@@ -1,23 +1,22 @@
 // Prepare for web server
 var fs = require("fs");
 var path = require("path");
+var url = require('url');
 var config = require('./config');
 var moment = require('moment');
 var account = require('./vendermodule');
 
 var dirname = __dirname || path.dirname(fs.readlinkSync('/proc/self/exe'));
-var https_options = {
+var httpsOptions = {
   key: fs.readFileSync(path.resolve(dirname, 'cert/key.pem')).toString(),
   cert: fs.readFileSync(path.resolve(dirname, 'cert/cert.pem')).toString()
 };
 
 var app = require('express')();
 var server = app.listen(config.port.plain);
-var servers = require("https").createServer(https_options, app).listen(config.port.secured);
-var io = require('socket.io').listen(server, {log: config.log.enabled});
-var ios = require('socket.io').listen(servers, {log: config.log.enabled});
-io.set('log level', config.log.level);
-ios.set('log level', config.log.level);
+var servers = require("https").createServer(httpsOptions, app).listen(config.port.secured);
+var io = require('socket.io').listen(server);
+var ios = require('socket.io').listen(servers);
 
 // "chat" or "room" means a chat room. "conversation" means a chat session.
 var sessionMap = {};  // Key is uid, and value is session object.
@@ -26,13 +25,11 @@ var conversations = {};  // Key is conversation ID, and value is an object with 
 var conversationIdSeed = 1;
 
 // Check user's token from partner
-function validateUser(handshakeData, successCallback, failureCallback){
+function validateUser(token, successCallback, failureCallback){
   // TODO: Should check token first, replace this block when engagement with different partners.
-  if(handshakeData.query.token){
-    account.authentication(handshakeData.query.token,function(uid){
-      handshakeData.user=new Object();
-      handshakeData.user.id=uid;
-      successCallback();
+  if(token){
+    account.authentication(token,function(uid){
+      successCallback(uid);
     },function(){
       console.log('Account system return false.');
       failureCallback(0);
@@ -43,14 +40,14 @@ function validateUser(handshakeData, successCallback, failureCallback){
 }
 
 function disconnectClient(uid){
-  if(sessionMap[uid]!=undefined){
+  if(sessionMap[uid]!==undefined){
     sessionMap[uid].disconnect();
     console.log('Force disconnected '+uid);
   }
 }
 
 function emitVideoError(socket,code){
-  socket.emit('video-error',{code: code});
+  socket.emit('chat-error',{code: code});
 }
 
 function createUuid(){
@@ -97,61 +94,76 @@ function stopConversation(cid){
 }
 
 // Join a chat room. It will send event to both sides.
-function joinChat(chatId, uid){
+function joinChat(chatId, uid, successCallback, failureCallback){
   if(!chats[chatId]){  // Join a new chat
     chats[chatId]=new Array(uid);
     sessionMap[uid].emit('chat-wait');
   }else if(chats[chatId].length>1){
-    emitVideoError(sessionMap[uid],2131);
-    return false;
+    failureCallback(2131);
   }else{  // Join an existed chat
     var peerId=chats[chatId][0];
     var session=sessionMap[peerId];  // Send chat-ready to existed user
     if(session)
-      session.emit('chat-ready',{peerId: uid});
+      session.emit('chat-ready',{peerId: uid, roomId: chatId, offer:false});
     session=sessionMap[uid];  // Send chat-ready to new user
     if(session){
-      session.emit('chat-ready',{peerId:peerId});
-      session.emit('video-invitation',{from:peerId});
+      session.emit('chat-ready',{peerId:peerId, roomId: chatId, offer:true});
     }
     chats[chatId].push(uid);
   }
   console.log('Chat ID: '+chatId+', attendee number: '+chats[chatId].length);
-  return true;
+  successCallback();
 }
 
-function emitChatEvent(socket, targetUid, eventName, message){
-  if(sessionMap[targetUid])
+function emitChatEvent(targetUid, eventName, message, successCallback, failureCallback){
+  if(sessionMap[targetUid]){
     sessionMap[targetUid].emit(eventName,message);
+    if(successCallback)
+      successCallback();
+  }
   else
-    emitVideoError(socket, 2201);
+    if(failureCallback)
+      failureCallback(2201);
 }
 
 function listen(io) {
-  io.of('/webrtc').authorization(function (handshakeData, callback) {
-    /* Handshake stores session related information. Handshake data has following properties:
-     * user - property: id
-     * peers - a map, key is peer's uid, value is an object with property: conversation id.
-     * chat - property: id
-    */
-    if(handshakeData.query.token){
-      validateUser(handshakeData, function(){  // Validate user's token successfully.
-        console.log(handshakeData.user.id+' authentication passed.');
-        callback(null,true);
-      },function(error){
-          // Invalid login.
-          console.log('Authentication failed.');
-          callback('',false);
-      });
-    }else{
-      handshakeData.user=new Object();
-      handshakeData.user.id=createUuid()+'@anonymous';
-      console.log('Anonymous user: '+handshakeData.user.id);
-      callback(null,true);
+  io.of('/webrtc').use(function(socket,next){
+    var handshakeData=socket.request;
+    var query=url.parse(handshakeData.url,true).query;
+    var token=query.token;
+    var clientVersion=query.clientVersion;
+    var clientType=query.clientType;
+    if(clientVersion!='1.5'){
+      next(new Error('2103'));
+      console.log('Unsupported client. Client version: '+query.clientVersion);
     }
-    handshakeData.peers={};
-    handshakeData.chats={};
-  }).on('connection',function(socket){
+    else{
+      /* Handshake stores session related information. Handshake data has following properties:
+       * user - property: id
+       * peers - a map, key is peer's uid, value is an object with property: conversation id.
+       * chat - property: id
+      */
+      if(token){
+        validateUser(token, function(uid){  // Validate user's token successfully.
+          handshakeData.user={id:uid};
+          console.log(uid+' authentication passed.');
+        },function(error){
+            // Invalid login.
+            console.log('Authentication failed.');
+            next();
+        });
+      }else{
+        handshakeData.user=new Object();
+        handshakeData.user.id=createUuid()+'@anonymous';
+        console.log('Anonymous user: '+handshakeData.user.id);
+      }
+      handshakeData.peers={};
+      handshakeData.chats={};
+      socket.handshake=handshakeData;
+      next();
+    }
+  });
+  io.of('/webrtc').on('connection',function(socket){
     // Disconnect previous session if this user already signed in.
     var uid=socket.handshake.user.id;
     disconnectClient(uid);
@@ -172,7 +184,7 @@ function listen(io) {
             stopConversation(peer.cid);
           var remoteSession=sessionMap[peerId];  // Peer's session.
           if(remoteSession){
-            remoteSession.emit('video-stopped',{from: uid});
+            remoteSession.emit('chat-stopped',{from: uid});
             // Delete peer information for remote user.
             if(remoteSession.handshake.peers[uid])
               delete remoteSession.handshake.peers.uid;
@@ -192,20 +204,29 @@ function listen(io) {
     });
 
     // Forward events
-    var forwardEvents=['video-invitation'];
+    var forwardEvents=['chat-invitation','chat-accepted','stream-type','chat-negotiation-needed','chat-negotiation-accepted'];
     for (var i=0;i<forwardEvents.length;i++){
       socket.on(forwardEvents[i],(function(i){
-        return function(data){
+        return function(data, ackCallback){
           console.log('Received '+forwardEvents[i]);
-          emitChatEvent(socket,data.to,forwardEvents[i],{from:socket.handshake.user.id});
+          data.from=socket.handshake.user.id;
+          var to=data.to;
+          delete data.to;
+          emitChatEvent(to,forwardEvents[i],data,function(){
+            if(ackCallback)
+              ackCallback();
+          },function(errorCode){
+            if(ackCallback)
+              ackCallback(errorCode);
+          });
         };
       })(i));
     }
 
-    var stopEvents=['video-stopped','video-denied'];
+    var stopEvents=['chat-stopped','chat-denied'];
     for (var i=0;i<stopEvents.length;i++){
       socket.on(stopEvents[i],(function(i){
-        return function(data){
+        return function(data, ackCallback){
           console.log('Received '+stopEvents[i]);
           var targetUid=data.to;
 
@@ -221,16 +242,21 @@ function listen(io) {
             delete sessionMap[targetUid].handshake.peers[socket.handshake.user.id];
           }
 
-          emitChatEvent(socket,targetUid,stopEvents[i],{from:socket.handshake.user.id});
+          emitChatEvent(targetUid,stopEvents[i],{from:socket.handshake.user.id});
+
+          // If the target is offline, client SDK will clean resource when disconnect from peer server. So we doesn't send error to client if chat-stopped or chat-denied is dropped.
+          if(ackCallback)
+            ackCallback();
         };
       })(i));
     }
 
     // Signal message
     // Separated from forward events because we may parse signal messages in the future for gateway mode.
-    socket.on('video-signal',function(data){
+    socket.on('chat-signal',function(data, ackCallback){
       var fromUid=socket.handshake.user.id;
       var targetUid=data.to;
+      console.log('Received signaling message from ' + fromUid);
       // Record chat state to conversation map
       if(!socket.handshake.peers[targetUid]){
         socket.handshake.peers[targetUid]={};
@@ -243,39 +269,43 @@ function listen(io) {
         }
       }
 
-      if(sessionMap[targetUid])
-        sessionMap[targetUid].emit('video-signal',{from:fromUid, data:data.data});
-      else
-        emitVideoError(socket, 2201);
-    });
-
-    socket.on('video-type',function(data){
-      var fromUid=socket.handshake.user.id;
-      var targetUid=data.to;
-      if(sessionMap[targetUid])
-        sessionMap[targetUid].emit('video-type',{from:fromUid, data:data.data});
-      else
-        emitVideoError(socket, 2201);
-    });
-
-
-    socket.on('chatroom-join',function(data){
-      if(data.chatId){  // Join a chat
-        if(joinChat(data.chatId,socket.handshake.user.id))
-          socket.handshake.chats[data.chatId]={id:data.chatId};
+      if(sessionMap[targetUid]){
+        sessionMap[targetUid].emit('chat-signal',{from:fromUid, data:data.data});
+        if(ackCallback)
+          ackCallback();
+      }
+      else{
+        if(ackCallback)
+          ackCallback(2201);
       }
     });
 
-    socket.on('chatroom-leave',function(data){
-      if(data.chatId&&socket.handshake.chats[data.chatId]){
-        console.log('Leaving chat: '+data.chatId);
-        leaveChat(data.chatId,socket.handshake.user.id);
+    socket.on('chatroom-join',function(data, ackCallback){
+      if(data.roomId){  // Join a chat
+        console.log(socket.handshake.user.id +' is going to join room '+data.roomId);
+        joinChat(data.roomId,socket.handshake.user.id, function(){
+          socket.handshake.chats[data.roomId]={id:data.roomId};
+          if(ackCallback)
+            ackCallback();
+        },function(errorCode){
+          if(ackCallback)
+            ackCallback(errorCode);
+        });
+      }
+    });
+
+    socket.on('chatroom-leave',function(data, ackCallback){
+      if(data.roomId&&socket.handshake.chats[data.roomId]){
+        console.log('Leaving chat: '+data.roomId);
+        leaveChat(data.roomId,socket.handshake.user.id);
         for(var peerId in socket.handshake.peers){
           var peer=socket.handshake.peers[peerId];
-          if(peer.cid=data.chatId)
+          if(peer.cid=data.roomId)
             delete socket.handshake.peers[peerId];
         }
       }
+      if(ackCallback)
+        ackCallback();
     });
   });
 }
@@ -286,7 +316,7 @@ listen(ios);
 // Signaling server only allowed to be connected with Socket.io.
 // If a client try to connect it with any other methods, server returns 405.
 app.get('*', function(req, res, next) {
-  res.send(405, 'WebRTC signaling server. Please connect it with Socket.io.');
+  res.send(405, 'WebRTC signaling server. Please connect it with Socket.IO.');
 });
 
 console.info('Listening port: ' + config.port.plain + '/' + config.port.secured);
