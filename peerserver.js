@@ -73,13 +73,16 @@ function leaveChat(chatId, uid){
   }
 
   // Send message to other users.
-  for(var i=0;i<chats[chatId].length;i++){
+  for(var i=0;chats[chatId]&&i<chats[chatId].length;i++){
     var session=sessionMap[chats[chatId][i]];
     if(session){
       session.emit('chat-wait');
     }
   }
-  console.log('Chat ID: '+chatId+', attendee number: '+chats[chatId].length);
+  if(chats[chatId])
+    console.log('Chat ID: '+chatId+', attendee number: '+chats[chatId].length);
+  else
+    console.log('Chat ID: '+chatId+', attendee number: 0');
 }
 
 // Stop a conversation.
@@ -256,7 +259,7 @@ function listen(io) {
     socket.on('chat-signal',function(data, ackCallback){
       var fromUid=socket.handshake.user.id;
       var targetUid=data.to;
-      console.log('Received signaling message from ' + fromUid);
+      console.log('Received signaling message from ' + fromUid + ' data: '+JSON.stringify(data.data));
       // Record chat state to conversation map
       if(!socket.handshake.peers[targetUid]){
         socket.handshake.peers[targetUid]={};
