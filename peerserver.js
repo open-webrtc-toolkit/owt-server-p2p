@@ -103,6 +103,7 @@ function joinChat(chatId, uid, successCallback, failureCallback){
     sessionMap[uid].emit('chat-wait');
   }else if(chats[chatId].length>1){
     failureCallback(2131);
+    return;
   }else{  // Join an existed chat
     var peerId=chats[chatId][0];
     var session=sessionMap[peerId];  // Send chat-ready to existed user
