@@ -41,7 +41,9 @@ function validateUser(token, successCallback, failureCallback){
 
 function disconnectClient(uid){
   if(sessionMap[uid]!==undefined){
-    sessionMap[uid].disconnect();
+    var session=sessionMap[uid];
+    session.emit('server-disconnect');
+    session.disconnect();
     console.log('Force disconnected '+uid);
   }
 }
@@ -137,36 +139,40 @@ function listen(io) {
     var token=query.token;
     var clientVersion=query.clientVersion;
     var clientType=query.clientType;
-    if(clientVersion!='1.5'){
-      next(new Error('2103'));
-      console.log('Unsupported client. Client version: '+query.clientVersion);
-    }
-    else{
-      /* Handshake stores session related information. Handshake data has following properties:
-       * user - property: id
-       * peers - a map, key is peer's uid, value is an object with property: conversation id.
-       * chat - property: id
-      */
-      if(token){
-        validateUser(token, function(uid){  // Validate user's token successfully.
-          handshakeData.user={id:uid};
-          console.log(uid+' authentication passed.');
-        },function(error){
-            // Invalid login.
-            console.log('Authentication failed.');
-            next();
-        });
-      }else{
-        handshakeData.user=new Object();
-        handshakeData.user.id=createUuid()+'@anonymous';
-        console.log('Anonymous user: '+handshakeData.user.id);
-      }
-      handshakeData.peers={};
-      handshakeData.chats={};
-      socket.handshake=handshakeData;
-      next();
+    switch(clientVersion){
+      case '1.5':
+      case '2.0':
+        /* Handshake stores session related information. Handshake data has following properties:
+         * user - property: id
+         * peers - a map, key is peer's uid, value is an object with property: conversation id.
+         * chat - property: id
+        */
+        if(token){
+          validateUser(token, function(uid){  // Validate user's token successfully.
+            handshakeData.user={id:uid};
+            console.log(uid+' authentication passed.');
+          },function(error){
+              // Invalid login.
+              console.log('Authentication failed.');
+              next();
+          });
+        }else{
+          handshakeData.user=new Object();
+          handshakeData.user.id=createUuid()+'@anonymous';
+          console.log('Anonymous user: '+handshakeData.user.id);
+        }
+        handshakeData.peers={};
+        handshakeData.chats={};
+        socket.handshake=handshakeData;
+        next();
+        break;
+      default:
+        next(new Error('2103'));
+        console.log('Unsupported client. Client version: '+query.clientVersion);
+        break;
     }
   });
+
   io.of('/webrtc').on('connection',function(socket){
     // Disconnect previous session if this user already signed in.
     var uid=socket.handshake.user.id;
@@ -179,6 +185,7 @@ function listen(io) {
       if(socket.handshake){
         var uid=socket.handshake.user.id;
         console.log('Peers: '+JSON.stringify(socket.handshake.peers));
+        /*
         // Leave conversation
         for(var peerId in socket.handshake.peers){
           var peer=socket.handshake.peers[peerId];
@@ -193,7 +200,7 @@ function listen(io) {
             if(remoteSession.handshake.peers[uid])
               delete remoteSession.handshake.peers.uid;
           }
-        }
+        }*/
         // If the user is in a chat, leave chat
         if(socket.handshake.chats){
           for(var chatId in socket.handshake.chats)
