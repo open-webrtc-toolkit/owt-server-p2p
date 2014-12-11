@@ -3,7 +3,6 @@ var fs = require("fs");
 var path = require("path");
 var url = require('url');
 var config = require('./config');
-var moment = require('moment');
 var account = require('./vendermodule');
 
 var dirname = __dirname || path.dirname(fs.readlinkSync('/proc/self/exe'));
@@ -93,7 +92,7 @@ function stopConversation(cid){
   if(conversations[cid]){
     var attendees=conversations[cid].attendees;
     // You can replace the console.log if you want to send event to partner, or record it to database.
-    console.log('Chat stopped, attendees: '+attendees[0]+', '+attendees[1]+', duration: '+moment.duration(Date.now()-conversations[cid].startTime).seconds()+'s');
+    console.log('Chat stopped, attendees: '+attendees[0]+', '+attendees[1]+'.');
     delete conversations[cid];
   }
 }
