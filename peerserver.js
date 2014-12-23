@@ -139,7 +139,6 @@ function listen(io) {
     var clientVersion=query.clientVersion;
     var clientType=query.clientType;
     switch(clientVersion){
-      case '1.5':
       case '2.0':
         /* Handshake stores session related information. Handshake data has following properties:
          * user - property: id
