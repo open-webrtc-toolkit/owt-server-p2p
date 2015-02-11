@@ -69,7 +69,7 @@ function listen(io) {
     var clientType=query.clientType;
     switch(clientVersion){
       case '2.0':
-      case '2.1':
+      case '2.0.1':
         /* Handshake stores session related information. Handshake data has following properties:
          * user - property: id
          * peers - a map, key is peer's uid, value is an object with property: conversation id.
