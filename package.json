@@ -1,6 +1,6 @@
 {
   "name": "P2PServer",
-  "version": "1.0.0",
+  "version": "2.0.1",
   "description": "Intel Conference P2P Server",
   "homepage": "http://webrtc.intel.com",
   "author": {
@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "express":"~3.4",
-    "socket.io":"1.2",
-    "moment":"2.5.0"
+    "socket.io":"1.3.4"
   }
 }
