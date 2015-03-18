@@ -67,8 +67,6 @@ function authorization(socket, next){
   var clientVersion=query.clientVersion;
   var clientType=query.clientType;
   switch(clientVersion){
-    case '2.0':
-    case '2.0.1':
     case '2.1':
       // socket.user stores session related information.
       if(token){
