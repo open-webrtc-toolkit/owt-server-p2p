@@ -69,6 +69,7 @@ function authorization(socket, next){
   switch(clientVersion){
     case '2.0':
     case '2.0.1':
+    case '2.1':
       // socket.user stores session related information.
       if(token){
         validateUser(token, function(uid){  // Validate user's token successfully.
@@ -136,8 +137,6 @@ function onConnection(socket){
 function listen(io) {
   io.use(authorization);
   io.on('connection',onConnection);
-  io.of('/webrtc').use(authorization);
-  io.of('/webrtc').on('connection',onConnection);
 }
 
 listen(io);
