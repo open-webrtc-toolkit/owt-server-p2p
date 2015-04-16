@@ -93,8 +93,7 @@ function authorization(socket, next){
   var clientVersion=query.clientVersion;
   var clientType=query.clientType;
   switch(clientVersion){
-    case '2.1':
-    case '2.1.1':
+    case '2.5':
       // socket.user stores session related information.
       if(token){
         validateUser(token, function(uid){  // Validate user's token successfully.
@@ -139,7 +138,7 @@ function onConnection(socket){
   });
 
   // Forward events
-  var forwardEvents=['chat-invitation','chat-accepted','stream-type','chat-negotiation-needed','chat-negotiation-accepted','chat-stopped','chat-denied','chat-signal'];
+  var forwardEvents=['woogeen-message'];
   for (var i=0;i<forwardEvents.length;i++){
     socket.on(forwardEvents[i],(function(i){
       return function(data, ackCallback){
@@ -169,8 +168,8 @@ listen(ios);
 
 // Signaling server only allowed to be connected with Socket.io.
 // If a client try to connect it with any other methods, server returns 405.
-app.get('*', function(req, res, next) {
+/*app.get('*', function(req, res, next) {
   res.send(405, 'WebRTC signaling server. Please connect it with Socket.IO.');
-});
+});*/
 
 console.info('Listening port: ' + config.port.plain + '/' + config.port.secured);
