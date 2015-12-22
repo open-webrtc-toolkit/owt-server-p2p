@@ -95,6 +95,8 @@ function authorization(socket, next){
   switch(clientVersion){
     case '2.5':
     case '2.8':
+    case '2.8.1':
+    case '3.0':
       // socket.user stores session related information.
       if(token){
         validateUser(token, function(uid){  // Validate user's token successfully.
