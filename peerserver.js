@@ -97,6 +97,7 @@ function authorization(socket, next){
     case '2.8':
     case '2.8.1':
     case '3.0':
+    case '3.1':
       // socket.user stores session related information.
       if(token){
         validateUser(token, function(uid){  // Validate user's token successfully.
@@ -145,7 +146,7 @@ function onConnection(socket){
   for (var i=0;i<forwardEvents.length;i++){
     socket.on(forwardEvents[i],(function(i){
       return function(data, ackCallback){
-        console.log('Received '+forwardEvents[i]);
+        console.log('Received '+forwardEvents[i]+': '+JSON.stringify(data));
         data.from=socket.user.id;
         var to=data.to;
         delete data.to;
