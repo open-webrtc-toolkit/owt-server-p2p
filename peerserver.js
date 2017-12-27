@@ -100,6 +100,8 @@ function authorization(socket, next){
     case '3.4':
     case '3.4.1':
     case '3.5':
+    case '3.5.1':
+    case '3.5.2':
       // socket.user stores session related information.
       if(token){
         validateUser(token, function(uid){  // Validate user's token successfully.
