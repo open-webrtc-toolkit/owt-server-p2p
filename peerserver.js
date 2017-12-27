@@ -93,15 +93,7 @@ function authorization(socket, next){
   var clientVersion=query.clientVersion;
   var clientType=query.clientType;
   switch(clientVersion){
-    case '3.2':
-    case '3.2.1':
-    case '3.3':
-    case '3.3.1':
-    case '3.4':
-    case '3.4.1':
-    case '3.5':
-    case '3.5.1':
-    case '3.5.2':
+    case '4.0':
       // socket.user stores session related information.
       if(token){
         validateUser(token, function(uid){  // Validate user's token successfully.
@@ -146,7 +138,7 @@ function onConnection(socket){
   });
 
   // Forward events
-  var forwardEvents=['woogeen-message'];
+  var forwardEvents=['ics-message'];
   for (var i=0;i<forwardEvents.length;i++){
     socket.on(forwardEvents[i],(function(i){
       return function(data, ackCallback){
