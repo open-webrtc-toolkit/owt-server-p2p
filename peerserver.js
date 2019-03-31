@@ -71,11 +71,7 @@ function authorization(socket, next){
   var clientVersion=query.clientVersion;
   var clientType=query.clientType;
   switch(clientVersion){
-    case '4.0':
-    case '4.0.1':
-    case '4.0.2':
-    case '4.1':
-    case '4.1.1':
+    case '4.2':
       // socket.user stores session related information.
       if(token){
         validateUser(token, function(uid){  // Validate user's token successfully.
@@ -120,7 +116,7 @@ function onConnection(socket){
   });
 
   // Forward events
-  var forwardEvents=['ics-message'];
+  var forwardEvents=['owt-message'];
   for (var i=0;i<forwardEvents.length;i++){
     socket.on(forwardEvents[i],(function(i){
       return function(data, ackCallback){
