@@ -116,7 +116,7 @@ function onConnection(socket){
   });
 
   // Forward events
-  var forwardEvents=['ics-message'];
+  var forwardEvents=['owt-message'];
   for (var i=0;i<forwardEvents.length;i++){
     socket.on(forwardEvents[i],(function(i){
       return function(data, ackCallback){
