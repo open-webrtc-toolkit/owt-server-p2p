@@ -7,7 +7,7 @@ var fs = require("fs");
 var path = require("path");
 var url = require('url');
 var config = require('./config');
-var account = require('./vendermodule');
+var account = require('./vendormodule');
 
 var dirname = __dirname || path.dirname(fs.readlinkSync('/proc/self/exe'));
 var httpsOptions = {
