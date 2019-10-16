@@ -13,10 +13,10 @@ npm install
 ### SSL/TLS
 The default plain port is 8095, and the default secure port is 8096. These default values can be modified in the file `config.json`.
 
-Connecting server with secure socket.io connections are recommended. The default certificate is stored in `cert` directory with two files: `cert.pem` and `key.pem`. Please replace them with a trusted one applied from a trusted CA.
+Connecting server with secure socket.io connections is recommended. The default certificate is stored in `cert` directory with two files: `cert.pem` and `key.pem`. Please replace them with  trusted ones applied from a trusted CA.
 
 ### Launch the server
-Run the following commands to launch the server:
+Run the following command to launch the server:
 
 ```
 node peerserver.js
