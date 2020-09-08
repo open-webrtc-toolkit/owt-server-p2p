@@ -6,7 +6,7 @@ gRPC support is working in progress. It is not complete yet.
 
 ## Changes for server
 
-- Message forwarding logical will be moved to a separate file.
+- Message forwarding logic will be moved to a separate file.
 - A new gRPC server module will be added as an alternative of existing socket.io server module.
 - Manages a bidirectional stream with each client.
 
