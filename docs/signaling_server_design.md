@@ -10,7 +10,7 @@ P2P server in this repository is an implementation of signaling server, it works
 
 There are two typical use cases to use P2P APIs of OWT SDKs.
 
-- Using PeerServer and OWT's default Signaling channel(socket.io which is based on websocket and other transport protocols).
+- Using PeerServer and OWT's default Signaling channel(accepts socket.io which is based on websocket and other transport protocols, and gRPC connections).
   In this use case, the developer uses both P2P APIs and signaling channel implemented with P2P server in this repository.
 - Using P2P APIs with user' own message delivery method to replace OWT's default signaling Channel.
   In this use case, the developer doesn't deploy P2P Server and default signaling Channel. The developer only use P2P APIs to setup WebRTC connections, and  send signaling message with its own implementation of OWT signaling interface.
@@ -30,9 +30,9 @@ Message format is defined by signaling channel and signaling server's developer.
 
 The diagram below shows the architecture of P2P Server in this repository.
 
-![P2P server architecture](images/p2p_server_arch.png)
+![P2P server architecture](images/p2p_server_arch.svg)
 
-It listens on 8095 port for plain http/ws connections, and 8096 for secure https/wss connections.
+It listens on 8095 port for plain http/ws connections, 8096 for secure https/wss connections, 8097 for plain gRPC connections and 8098 for secure gRPC connections.
 
 ### Handshake
 
