@@ -1,13 +1,15 @@
 {
-  "name": "P2PServer",
-  "description": "Intel Conference P2P Server",
-  "homepage": "http://webrtc.intel.com",
-  "author": {
-    "name": "Intel SSG",
-    "email": "webrtc@intel.com"
-  },
+  "name": "owt-server-p2p",
+  "description": "Sample P2P signaling server for Open WebRTC Toolkit.",
+  "homepage": "https://github.com/open-webrtc-toolkit/owt-server-p2p",
   "dependencies": {
     "express": "^4.16.4",
     "socket.io": "^2.2.0"
+  },
+  "engines": {
+    "node": ">= 10.0.0"
+  },
+  "scripts": {
+    "start": "node src/index.js"
   }
 }
