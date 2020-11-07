@@ -48,6 +48,10 @@ exports.create = (config) => {
 
   async function authenticate(socket, next) {
     const query = url.parse(socket.request.url, true).query;
+    if (!query.token) {  // Latest clients don't send token in query string.
+      next();
+      return;
+    }
     const token = query.token;
     const clientVersion = query.clientVersion;
     const auth =
@@ -61,13 +65,34 @@ exports.create = (config) => {
   }
 
   function onConnection(socket) {
-    // Disconnect previous session if this user already signed in.
-    const uid = socket.uid;
-    disconnectClient(uid);
-    sessionMap.set(uid, socket);
-    socket.emit(
-        'server-authenticated',
-        {uid: uid});  // Send current client id to client.
+    // `socket.uid` may be filled later by `authentication` message.
+    if (socket.uid) {
+      // Disconnect previous session if this user already signed in.
+      const uid = socket.uid;
+      disconnectClient(uid);
+      sessionMap.set(uid, socket);
+      socket.emit(
+          'server-authenticated',
+          {uid: uid});  // Send current client id to client.
+    }
+    socket.on('authentication', (data, ackCallback) => {
+      const auth = server.onauthentication(server, data.token);
+      if (auth.error) {
+        ackCallback({error: auth.error});
+        socket.disconnect();
+        return;
+      }
+      // Disconnect previous session if this user already signed in.
+      const uid = auth.uid;
+      disconnectClient(uid);
+      socket.uid = uid;
+      sessionMap.set(uid, socket);
+      // `server-authenticated` will be removed.
+      socket.emit(
+          'server-authenticated',
+          {uid: uid});  // Send current client id to client.
+      ackCallback({uid: uid});
+    });
 
     socket.on('disconnect', function() {
       if (socket.uid) {
@@ -83,6 +108,12 @@ exports.create = (config) => {
     });
 
     socket.on(forwardEventName, (data, ackCallback) => {
+      if (!socket.uid) {
+        console.log('Received a message from unauthenticated client.');
+        ackCallback(2120);
+        socket.disconnect();
+        return;
+      }
       data.from = socket.uid;
       const to = data.to;
       delete data.to;

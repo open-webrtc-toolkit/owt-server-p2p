@@ -29,28 +29,18 @@ function createUuid() {
 
 // Please modify this function if you need to add your own credential validation
 // procedure.
-function authenticate(server, token, clientInfo) {
-  switch (clientInfo.version) {
-    case '4.2':
-    case '4.2.1':
-    case '4.3':
-    case '4.3.1':
-    case '4.4':
-      const uid = token;
-      if (!uid) {
-        uid = createUuid() + '@anonymous';
-      }
-      if (sessionMap.has(uid)) {
-        console.log('Force disconnected ' + uid);
-        sessionMap.get(uid).disconnect();
-      }
-      sessionMap.set(uid, server);
-      console.log(uid + ' is connected.');
-      return {uid: uid, error: null};
-    default:
-      console.log('Unsupported client. Client version: ' + clientInfo.version);
-      return {uid: null, error: '2103'};
+function authenticate(server, token) {
+  const uid = token;
+  if (!uid) {
+    uid = createUuid() + '@anonymous';
   }
+  if (sessionMap.has(uid)) {
+    console.log('Force disconnected ' + uid);
+    sessionMap.get(uid).disconnect();
+  }
+  sessionMap.set(uid, server);
+  console.log(uid + ' is connected.');
+  return {uid: uid, error: null};
 }
 
 async function onMessage(to, message) {
