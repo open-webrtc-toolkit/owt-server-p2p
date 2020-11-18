@@ -1,0 +1,38 @@
+// Copyright (C) <2020> Intel Corporation
+//
+// SPDX-License-Identifier: Apache-2.0
+
+// Interface for implementing a transport server.
+interface TransportServer {
+  // Start the server.
+  Promise<void> start();
+  // Stop the server. After the server is stopped, ended event will be fired.
+  void stop();
+  // Stop the connection with `userId`.
+  void disconnect(DOMString userId);
+  // Send a text message to `userId`.
+  Promise<void> send(DOMString userId, DOMString message);
+  // A client is disconnected. Parameter: userId.
+  // If the server supports reconnection, `disconnect` event should be fired after all reconnection attempts failed.
+  attribute EventHandler ondisconnect;
+  // Authentication for a newly connected client. Parameter: server of an TransportServer implementation, token of a DOMString, clientInfo({version: DOMString}). Returns an object {uid: DOMString, error: DOMString}, error is null when authentication success, uid is null when authentication failed.
+  attribute EventHandler onauthentication;
+  // Server is stopped. Parameter: server of an TransportServer implementation.
+  attribute EventHandler onended;
+  // A new text message is received. Parameters: from, to, message. Returns a promise resolved when the message sends out, or rejected with an error code if the message failed to delivery.
+  attribute EventHandler onmessage;
+};
+
+// Configuration for a TransportServer.
+interface TransportServerConfig {
+  // Port for non-secure connections. It could be null or undefined if the server requires all connections are secure. It is recommended to only support secure connections in product environment.
+  unsigned int plainPort;
+  // Port for secure connections.
+  unsigned int securePort;
+}
+
+// A CommonJS style node.js module for TransportServer.
+interface TransportServerModule{
+  // Create a server.
+  static TransportServer create(TransportServerConfig config);
+}

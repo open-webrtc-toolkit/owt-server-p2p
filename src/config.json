@@ -1,0 +1,22 @@
+{
+  "transportServers": [
+    {
+      "name": "socketio",
+      "config": {
+        "plainPort": 8095,
+        "securePort": 8096
+      }
+    },
+    {
+      "name": "grpc",
+      "config": {
+        "plainPort": 8097,
+        "securePort": 8098
+      }
+    }
+  ],
+  "logging": {
+    "enabled": true,
+    "level": 1
+  }
+}
