@@ -30,10 +30,7 @@ function createUuid() {
 // Please modify this function if you need to add your own credential validation
 // procedure.
 function authenticate(server, token) {
-  const uid = token;
-  if (!uid) {
-    uid = createUuid() + '@anonymous';
-  }
+  const uid = token ? token : createUuid() + '@anonymous';
   if (sessionMap.has(uid)) {
     console.log('Force disconnected ' + uid);
     sessionMap.get(uid).disconnect();
