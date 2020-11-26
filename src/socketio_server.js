@@ -31,6 +31,8 @@ exports.create = (config) => {
     if (sessionMap.has(uid)) {
       const session = sessionMap.get(uid);
       session.emit('server-disconnect');
+      sessionMap.delete(uid);
+      session.uid = null;
       session.disconnect();
     }
   }
@@ -46,24 +48,6 @@ exports.create = (config) => {
     }
   }
 
-  async function authenticate(socket, next) {
-    const query = url.parse(socket.request.url, true).query;
-    if (!query.token) {  // Latest clients don't send token in query string.
-      next();
-      return;
-    }
-    const token = query.token;
-    const clientVersion = query.clientVersion;
-    const auth =
-        await server.onauthentication(server, token, {version: clientVersion});
-    if (auth.error) {
-      next(auth.error);
-    } else {
-      socket.uid = auth.uid;
-      next();
-    }
-  }
-
   function onConnection(socket) {
     // `socket.uid` may be filled later by `authentication` message.
     if (socket.uid) {
@@ -71,9 +55,6 @@ exports.create = (config) => {
       const uid = socket.uid;
       disconnectClient(uid);
       sessionMap.set(uid, socket);
-      socket.emit(
-          'server-authenticated',
-          {uid: uid});  // Send current client id to client.
     }
     socket.on('authentication', (data, ackCallback) => {
       const auth = server.onauthentication(server, data.token);
@@ -128,7 +109,6 @@ exports.create = (config) => {
   }
 
   function listen(io) {
-    io.use(authenticate);
     io.on('connection', onConnection);
   }
 
