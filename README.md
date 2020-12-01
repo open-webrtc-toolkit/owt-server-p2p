@@ -19,7 +19,7 @@ Connecting server with secure socket.io connections is recommended. The default 
 Run the following command to launch the server:
 
 ```
-node peerserver.js
+node src/index.js
 ```
 
 ### Stop the server
