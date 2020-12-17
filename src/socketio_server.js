@@ -124,6 +124,7 @@ exports.create = (config) => {
     // Signaling server only allowed to be connected with Socket.io.
     // If a client try to connect it with any other methods, server returns 405.
     app.get('*', function(req, res, next) {
+      res.setHeader('strict-transport-security', 'max-age=31536000');
       res.send(405, 'OWT signaling server. Please connect it with Socket.IO.');
     });
 
