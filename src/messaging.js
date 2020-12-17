@@ -12,6 +12,7 @@
 
 'use strict';
 
+const { v4 : uuid } = require('uuid');
 const config = require('./config');
 const socketioServer =
     require('./socketio_server')
@@ -20,17 +21,10 @@ const socketioServer =
 // Key is client ID, value is transport server object.
 const sessionMap = new Map();
 
-function createUuid() {
-  return 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-
 // Please modify this function if you need to add your own credential validation
 // procedure.
 function authenticate(server, token) {
-  const uid = token ? token : createUuid() + '@anonymous';
+  const uid = token ? token : uuid().replace(/-/g, '') + '@anonymous';
   if (sessionMap.has(uid)) {
     console.log('Force disconnected ' + uid);
     sessionMap.get(uid).disconnect();
