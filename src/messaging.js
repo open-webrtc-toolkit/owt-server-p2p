@@ -24,30 +24,30 @@ const sessionMap = new Map();
 // Please modify this function if you need to add your own credential validation
 // procedure.
 function authenticate(server, token) {
-  const uid = token ? token : uuid().replace(/-/g, '') + '@anonymous';
-  if (sessionMap.has(uid)) {
-    console.log('Force disconnected ' + uid);
-    sessionMap.get(uid).disconnect();
+  const cid = token ? token : uuid().replace(/-/g, '') + '@anonymous';
+  if (sessionMap.has(cid)) {
+    console.log('Force disconnected ' + cid);
+    sessionMap.get(cid).disconnect();
   }
-  sessionMap.set(uid, server);
-  console.log(uid + ' is connected.');
-  return {uid: uid, error: null};
+  sessionMap.set(cid, server);
+  console.log(cid + ' is connected.');
+  return {cid: cid, error: null};
 }
 
 async function onMessage(to, message) {
   if (!sessionMap.has(to)) {
-    const error = new Error('Remote user cannot be reached.');
+    const error = new Error('Remote client cannot be reached.');
     error.code = '2201';
     throw error;
   }
   return sessionMap.get(to).send(to, message);
 }
 
-function onDisconnect(userId) {
-  if (!sessionMap.has(userId)) {
+function onDisconnect(cid) {
+  if (!sessionMap.has(cid)) {
     return;
   }
-  sessionMap.delete(userId);
+  sessionMap.delete(cid);
 }
 
 function onServerEnded(server) {
