@@ -25,21 +25,22 @@ exports.create = (config) => {
   let plainServer;
   let secureServer;
 
-  const sessionMap = new Map();  // Key is uid, and value is session object.
+  // Key is cid, and value is the socket object.
+  const connectionMap = new Map();
 
-  function disconnectClient(uid) {
-    if (sessionMap.has(uid)) {
-      const session = sessionMap.get(uid);
-      session.emit('server-disconnect');
-      sessionMap.delete(uid);
-      session.uid = null;
-      session.disconnect();
+  function disconnectClient(cid) {
+    if (connectionMap.has(cid)) {
+      const connection = connectionMap.get(cid);
+      connection.emit('server-disconnect');
+      connectionMap.delete(cid);
+      connection.cid = null;
+      connection.disconnect();
     }
   }
 
-  async function emitChatEvent(targetUid, eventName, message) {
-    if (sessionMap.has(targetUid)) {
-      sessionMap.get(targetUid).emit(eventName, message);
+  async function emitChatEvent(targetCid, eventName, message) {
+    if (connectionMap.has(targetCid)) {
+      connectionMap.get(targetCid).emit(eventName, message);
       return;
     } else {
       const error = new Error('Remote endpoint cannot be reached');
@@ -49,53 +50,53 @@ exports.create = (config) => {
   }
 
   function onConnection(socket) {
-    // `socket.uid` may be filled later by `authentication` message.
-    if (socket.uid) {
-      // Disconnect previous session if this user already signed in.
-      const uid = socket.uid;
-      disconnectClient(uid);
-      sessionMap.set(uid, socket);
+    // `socket.cid` may be filled later by `authentication` message.
+    if (socket.cid) {
+      // Disconnect previous connection if this user already signed in.
+      const cid = socket.cid;
+      disconnectClient(cid);
+      connectionMap.set(cid, socket);
     }
     socket.on('authentication', (data, ackCallback) => {
-      const auth = server.onauthentication(server, data.token);
-      if (auth.error) {
-        ackCallback({error: auth.error});
+      const result = server.onauthentication(server, data.token);
+      if (result.error) {
+        ackCallback({error: result.error});
         socket.disconnect();
         return;
       }
-      // Disconnect previous session if this user already signed in.
-      const uid = auth.uid;
-      disconnectClient(uid);
-      socket.uid = uid;
-      sessionMap.set(uid, socket);
+      // Disconnect previous connection if this user already signed in.
+      const cid = result.cid;
+      disconnectClient(cid);
+      socket.cid = cid;
+      connectionMap.set(cid, socket);
       // `server-authenticated` will be removed.
       socket.emit(
           'server-authenticated',
-          {uid: uid});  // Send current client id to client.
-      ackCallback({uid: uid});
+          {uid: cid});  // Send current client id to client.
+      ackCallback({uid: cid});
     });
 
     socket.on('disconnect', function() {
-      if (socket.uid) {
-        const uid = socket.uid;
-        // Delete session.
-        if (sessionMap.has(socket.uid)) {
-          delete sessionMap.delete(socket.uid);
+      if (socket.cid) {
+        const cid = socket.cid;
+        // Delete connection.
+        if (connectionMap.has(socket.cid)) {
+          delete connectionMap.delete(socket.cid);
         }
-        server.ondisconnect(socket.uid);
+        server.ondisconnect(socket.cid);
         console.log(
-            uid + ' is disconnected. Online user number: ' + sessionMap.size);
+            cid + ' is disconnected. Online user number: ' + connectionMap.size);
       }
     });
 
     socket.on(forwardEventName, (data, ackCallback) => {
-      if (!socket.uid) {
+      if (!socket.cid) {
         console.log('Received a message from unauthenticated client.');
         ackCallback(2120);
         socket.disconnect();
         return;
       }
-      data.from = socket.uid;
+      data.from = socket.cid;
       const to = data.to;
       delete data.to;
       server.onmessage(to, data).then(
@@ -133,8 +134,8 @@ exports.create = (config) => {
         '(plain) and ' + config.securePort + '(secure).');
   }
 
-  server.send = (userId, message) => {
-    return emitChatEvent(userId, forwardEventName, message);
+  server.send = (cid, message) => {
+    return emitChatEvent(cid, forwardEventName, message);
   };
   server.start = () => {
     return startServer(serverConfig);
