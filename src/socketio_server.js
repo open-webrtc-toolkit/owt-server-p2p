@@ -109,7 +109,8 @@ exports.create = (config) => {
     });
   }
 
-  function listen(io) {
+  function listen(io, config) {
+    io.origins(config.allowedOrigins);
     io.on('connection', onConnection);
   }
 
@@ -120,8 +121,8 @@ exports.create = (config) => {
                        .listen(require('https')
                                    .createServer(httpsOptions, app)
                                    .listen(config.securePort));
-    listen(plainServer);
-    listen(secureServer);
+    listen(plainServer, config);
+    listen(secureServer, config);
     // Signaling server only allowed to be connected with Socket.io.
     // If a client try to connect it with any other methods, server returns 405.
     app.get('*', function(req, res, next) {

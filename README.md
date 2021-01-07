@@ -10,6 +10,9 @@ Install node dependencies by running following command in root directory of P2P 
 npm install
 ```
 
+### Cross-Origin Resource Sharing
+P2P server may be deployed in a different origin than the web pages. In this case, Cross-Origin Resource Sharing (CORS) is used to indicate which origins are allowed. Please add allowed origins to `config.json`.
+
 ### SSL/TLS
 The default plain port is 8095, and the default secure port is 8096. These default values can be modified in the file `config.json`.
 
