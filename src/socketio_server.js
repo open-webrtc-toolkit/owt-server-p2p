@@ -110,7 +110,14 @@ exports.create = (config) => {
   }
 
   function listen(io, config) {
-    io.origins(config.allowedOrigins);
+    io.origins((origin, callback) => {
+      if (!origin) {
+        // Requests initiated from non-web platforms don't have origin.
+        callback(null, true);
+      } else {
+        callback(null, config.allowedOrigins.includes(origin));
+      }
+    });
     io.on('connection', onConnection);
   }
 
