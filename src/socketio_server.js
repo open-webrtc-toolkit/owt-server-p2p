@@ -109,27 +109,34 @@ exports.create = (config) => {
     });
   }
 
-  function listen(io, config) {
-    io.origins((origin, callback) => {
-      if (!origin) {
-        // Requests initiated from non-web platforms don't have origin.
-        callback(null, true);
-      } else {
-        callback(null, config.allowedOrigins.includes(origin));
-      }
-    });
-    io.on('connection', onConnection);
+  function checkOrigin(origin, callback) {
+    if (!origin) {
+      // Requests initiated from non-web platforms don't have origin.
+      callback(null, true);
+    } else {
+      callback(null, config.allowedOrigins.includes(origin));
+    }
   }
 
   function startServer(config) {
+    const serverOptions = {
+      // After upgrading all client to Socket.IO 3.x, EIO3 will not be allowed.
+      allowEIO3: true,
+      cors: {
+        origin: checkOrigin,
+        // It looks like Socket.IO needs it for cookies.
+        credentials: true
+      }
+    }
     const app = require('express')();
-    plainServer = require('socket.io').listen(app.listen(config.plainPort));
-    secureServer = require('socket.io')
-                       .listen(require('https')
-                                   .createServer(httpsOptions, app)
-                                   .listen(config.securePort));
-    listen(plainServer, config);
-    listen(secureServer, config);
+    plainServer = require('socket.io')().listen(app.listen(config.plainPort),
+      serverOptions);
+    plainServer.on('connection', onConnection);
+    secureServer = require('socket.io')()
+      .listen(require('https')
+        .createServer(httpsOptions, app)
+        .listen(config.securePort), serverOptions);
+    secureServer.on('connection', onConnection);
     // Signaling server only allowed to be connected with Socket.io.
     // If a client try to connect it with any other methods, server returns 405.
     app.get('*', function(req, res, next) {
