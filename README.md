@@ -1,6 +1,6 @@
 # Open WebRTC Toolkit P2P Server
 ## Overview
-Open WebRTC Toolkit P2P Server is the default signaling server of Open WebRTC Toolkit. It provides the ability to exchange WebRTC signaling messages over Socket.IO among different clients.
+Open WebRTC Toolkit(OWT) P2P Server is the sample signaling server of OWT P2P mode. It provides the ability to exchange WebRTC signaling messages over Socket.IO among different clients.
 
 ## Running P2P Server
 ### Install Dependencies
@@ -27,6 +27,9 @@ node src/index.js
 
 ### Stop the server
 Press <kbd>Ctrl</kbd> + <kbd>C</kbd> to stop the peer server.
+
+## Scalability
+This signaling server is designed for evaluation purpose. OWT client SDKs support custom signaling services. Please consider cloud solutions for high availability and scalability.
 
 ## How to contribute
 We warmly welcome community contributions to Open WebRTC Toolkit JavaScript SDK repository. If you are willing to contribute your features and ideas to OWT, follow the process below:
