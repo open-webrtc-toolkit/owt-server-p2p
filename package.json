@@ -4,7 +4,7 @@
   "homepage": "https://github.com/open-webrtc-toolkit/owt-server-p2p",
   "dependencies": {
     "express": "^4.19.2",
-    "socket.io": "^4.6.1",
+    "socket.io": "^4.6.2",
     "uuid": "^8.0.0"
   },
   "engines": {
