@@ -3,8 +3,8 @@
   "description": "Sample P2P signaling server for Open WebRTC Toolkit.",
   "homepage": "https://github.com/open-webrtc-toolkit/owt-server-p2p",
   "dependencies": {
-    "express": "^4.21.0",
-    "socket.io": "^4.7.5",
+    "express": "^4.21.1",
+    "socket.io": "^4.8.0",
     "uuid": "^8.0.0"
   },
   "engines": {
